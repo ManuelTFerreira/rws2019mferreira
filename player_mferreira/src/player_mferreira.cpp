@@ -13,7 +13,7 @@ using namespace ros;
 
 float randomizePosition()
 {
-  srand(6485 * time(NULL));  // set initial seed value to 5323
+  srand(4875 * time(NULL));  // set initial seed value to 5323
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 }
 
@@ -109,7 +109,7 @@ private:
 class MyPlayer : public Player
 {
 public:
-  boost::shared_ptr<Team> team_red;
+  boost::shared_ptr<Team> red_alive;
   boost::shared_ptr<Team> team_green;
   boost::shared_ptr<Team> team_blue;
   boost::shared_ptr<Team> team_hunters;
@@ -122,16 +122,16 @@ public:
 
   MyPlayer(std::string player_name_in, std::string team_name_in) : Player(player_name_in)
   {
-    team_red = (boost::shared_ptr<Team>)new Team("red");
+    red_alive = (boost::shared_ptr<Team>)new Team("red");
     team_green = (boost::shared_ptr<Team>)new Team("green");
     team_blue = (boost::shared_ptr<Team>)new Team("blue");
     ros::NodeHandle n;
     vis_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
     (*vis_pub) = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
-    if (team_red->playerBelongsToTeam(player_name))
+    if (red_alive->playerBelongsToTeam(player_name))
     {
-      team_mine = team_red;
+      team_mine = red_alive;
       team_preys = team_green;
       team_hunters = team_blue;
     }
@@ -139,12 +139,12 @@ public:
     {
       team_mine = team_green;
       team_preys = team_blue;
-      team_hunters = team_red;
+      team_hunters = red_alive;
     }
     else if (team_blue->playerBelongsToTeam(player_name))
     {
       team_mine = team_blue;
-      team_preys = team_red;
+      team_preys = red_alive;
       team_hunters = team_green;
     }
     else
@@ -399,10 +399,10 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "mferreira");
   ros::NodeHandle n;
-  mferreira_ns::MyPlayer player("mferreira", "green");
+  mferreira_ns::MyPlayer player("mferreira", "blue");
   std::cout << "Hello world from " << player.player_name << " of team " << player.getTeamName() << std::endl;
 
-  mferreira_ns::Team team_green("red");
+  mferreira_ns::Team team_blue("blue");
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &mferreira_ns::MyPlayer::makeAPlayCallback, &player);
 
