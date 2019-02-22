@@ -40,9 +40,9 @@
   <!--   <build_depend>message_generation</build_depend> -->
   <!-- Use build_export_depend for packages you need in order to build against this package: -->
   <!--   <build_export_depend>message_generation</build_export_depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use exec_depend for packages you need at runtime: -->
+  <!-- Use buildtool_depend for std_msgsbuild tool packages: -->
+  <!--   <buildtool_depend>catkistd_msgsn</buildtool_depend> -->
+  <!-- Use exec_depend for packastd_msgsges you need at runtime: -->
   <!--   <exec_depend>message_runtime</exec_depend> -->
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
@@ -63,6 +63,8 @@
   <build_export_depend>rws2019_msgs</build_export_depend>
   <build_depend>tf</build_depend>
   <build_export_depend>tf</build_export_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
