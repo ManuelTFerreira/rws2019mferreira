@@ -191,13 +191,20 @@ public:
     // Step 2: Define how I want to move
 
     float dx = 0.1;
-    float angle = M_PI / 40;
+    float a = M_PI / 20;
+
+    // Step 2.5: check values
+    float dx_max = msg->turtle;
+    dx > dx_max ? dx = dx_max : dx = dx;
+
+    double amax = M_PI / 30;
+    fabs(a) > fabs(amax) ? a = amax * a / fabs(a) : a = a;
 
     // Step 3:move
     tf::Transform T1;
     T1.setOrigin(tf::Vector3(dx, 0.0, 0.0));
     tf::Quaternion q;
-    q.setRPY(0, 0, angle);
+    q.setRPY(0, 0, a);
     T1.setRotation(q);
 
     // br.sendTransform(tf::StampedTransform(T1, ros::Time::now(), "world",
