@@ -314,7 +314,7 @@ public:
       }
     }
 
-    float dx = 10;
+    float dx = 100;
     float a = angle_to_preys[idx_closest_prey];
 
     // Condicao para nao sair
@@ -324,6 +324,17 @@ public:
     std::tuple<float, float> w = getDistanceAndAngleToOrigin();
     distance_to_origin.push_back(std::get<0>(w));
     angle_to_origin.push_back(std::get<1>(w));
+
+    if ((distance_closest_hunter < distance_closest_prey * 0.5) && (distance_closest_hunter < 2))
+    {
+      // escape!!!!!!!!!;
+      a = -angle_to_hunters[idx_closest_hunter];
+    }
+    else
+    {
+      // hunt!!!!!!!!!!;
+      a = angle_to_preys[idx_closest_prey];
+    }
 
     float minDist = 7;
     if (distance_to_origin[0] > minDist)
