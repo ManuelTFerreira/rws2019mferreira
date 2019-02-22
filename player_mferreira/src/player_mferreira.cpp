@@ -216,6 +216,31 @@ public:
     return { d, a };
   }
 
+  // std::tuple<float, float> getDistanceToLimits(string other_player)
+  // {
+  //   tf::StampedTransform T0;
+  //   try
+  //   {
+  //     listener.lookupTransform(player_name, other_player, ros::Time(0), T0);
+  //   }
+  //   catch (tf::TransformException ex)
+  //   {
+  //     ROS_ERROR("%s", ex.what());
+  //     ros::Duration(0.01).sleep();
+  //     return { 1000.0, 0.0 };
+  //   }
+
+  //   float d = sqrt(T0.getOrigin().x() * T0.getOrigin().x() + T0.getOrigin().y() * T0.getOrigin().y());
+  //   float a = atan2(T0.getOrigin().y(), T0.getOrigin().x());
+  //   //            return std::tuple<float, float>(d,a);
+  //   return { d, a };
+  // }
+
+  std::tuple<float, float> getDistanceAndAngleToOrigin()
+  {
+    return getDistanceAndAngleToPlayer("world");
+  }
+
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
     ROS_INFO("received a new message");
@@ -231,6 +256,8 @@ public:
       ROS_ERROR("%s", ex.what());
       ros::Duration(0.1).sleep();
     }
+
+    float distanceToOrigin = sqrt(T0.getOrigin().x() * T0.getOrigin().x() + T0.getOrigin().y() * T0.getOrigin().y());
 
     // Step 2: Define how I want to move
 
@@ -264,59 +291,18 @@ public:
     float dx = 10;
     float a = angle_to_preys[idx_closest_prey];
 
-    // // PREY
-    // tf::StampedTransform Tprey;
-    // double minDistPrey = 100;
-    // int playerNumber = 0;
-    // for (int i = 1; i < sizeof(team_preys); i++)
-    // {
-    //   try
-    //   {
-    //     listener.lookupTransform("mferreira", team_preys->player_names[i], ros::Time(0), Tprey);
-    //   }
-    //   catch (tf::TransformException ex)
-    //   {
-    //     ROS_ERROR("%s", ex.what());
-    //     ros::Duration(0.1).sleep();
-    //   }
+    vector<float> distance_to_origin;
+    vector<float> angle_to_origin;
 
-    //   float x = Tprey.getOrigin().x();
-    //   float y = Tprey.getOrigin().y();
-    //   double dist = sqrt(x * x + y * y);
-    //   if (dist < minDistPrey)
-    //   {
-    //     minDistPrey = dist;
-    //     playerNumber = i;
-    //   }
-    // }
-    // string prey = team_preys->player_names[playerNumber];
+    std::tuple<float, float> w = getDistanceAndAngleToOrigin();
+    distance_to_origin.push_back(std::get<0>(w));
+    angle_to_origin.push_back(std::get<1>(w));
 
-    // // HUNTER
-    // tf::StampedTransform Thunter;
-    // double minDistPrey = 100;
-    // int playerNumber = 0;
-    // for (int i = 1; i < sizeof(team_hunters); i++)
-    // {
-    //   try
-    //   {
-    //     listener.lookupTransform("mferreira", team_hunters->player_names[i], ros::Time(0), Thunter);
-    //   }
-    //   catch (tf::TransformException ex)
-    //   {
-    //     ROS_ERROR("%s", ex.what());
-    //     ros::Duration(0.1).sleep();
-    //   }
-
-    //   float x = Thunter.getOrigin().x();
-    //   float y = Thunter.getOrigin().y();
-    //   double dist = sqrt(x * x + y * y);
-    //   if (dist < minDistPrey)
-    //   {
-    //     minDistPrey = dist;
-    //     playerNumber = i;
-    //   }
-    // }
-    // string hunter = team_hunters->player_names[playerNumber];
+    float minDist = 4.5;
+    if (distance_to_origin[0] > minDist)
+    {
+      a = angle_to_origin[0] + M_PI;
+    }
 
     // Step 2.5: check values
     float dx_max = msg->turtle;
