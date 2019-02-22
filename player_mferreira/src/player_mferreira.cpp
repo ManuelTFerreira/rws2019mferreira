@@ -2,11 +2,17 @@
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <vector>
 
 using namespace std;
 using namespace boost;
 using namespace ros;
+
+float randomizePosition() {
+  srand(6832 * time(NULL)); // set initial seed value to 5323
+  return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
+}
 
 namespace mferreira_ns {
 class Team {
@@ -87,6 +93,7 @@ public:
   boost::shared_ptr<Team> team_mine;
   boost::shared_ptr<Team> team_preys;
   tf::TransformBroadcaster br;
+  tf::TransformListener listener;
   tf::Transform transform;
 
   MyPlayer(std::string player_name_in, std::string team_name_in)
@@ -112,6 +119,21 @@ public:
     }
 
     setTeamName(team_mine->team_name);
+
+    // define intial position
+    float sx = randomizePosition();
+    float sy = randomizePosition();
+    tf::Transform T1;
+    T1.setOrigin(tf::Vector3(sx, sy, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, M_PI);
+    T1.setRotation(q);
+
+    // define global movement
+    tf::Transform Tglobal = T1;
+    br.sendTransform(
+        tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
+    printInfo();
   }
 
   void printInfo() {
@@ -125,13 +147,34 @@ public:
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
     ROS_INFO("received a new message");
 
-    tf::Transform transform1;
-    transform1.setOrigin(tf::Vector3(3.0, 4.0, 0.0));
+    // Step 1:Find out where I am
+    tf::StampedTransform T0;
+    try {
+      listener.lookupTransform("/world", player_name, ros::Time(0), T0);
+    } catch (tf::TransformException ex) {
+      ROS_ERROR("%s", ex.what());
+      ros::Duration(0.1).sleep();
+    }
+
+    // Step 2: Define how I want to move
+
+    float dx = 0.1;
+    float angle = M_PI / 40;
+
+    // Step 3:move
+    tf::Transform T1;
+    T1.setOrigin(tf::Vector3(dx, 0.0, 0.0));
     tf::Quaternion q;
-    q.setRPY(0, 0, 0);
-    transform1.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform1, ros::Time::now(), "world",
-                                          player_name));
+    q.setRPY(0, 0, angle);
+    T1.setRotation(q);
+
+    // br.sendTransform(tf::StampedTransform(T1, ros::Time::now(), "world",
+    // player_name));
+
+    // Step 4:
+    tf::Transform Tglobal = T0 * T1;
+    br.sendTransform(
+        tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
   }
 };
 
@@ -149,10 +192,13 @@ int main(int argc, char **argv) {
   ros::Subscriber sub = n.subscribe(
       "/make_a_play", 100, &mferreira_ns::MyPlayer::makeAPlayCallback, &player);
 
+  player.printInfo();
+  ros::Rate r(20);
+
   while (ros::ok()) {
-    ros::Duration(1).sleep();
-    player.printInfo();
+
     ros::spinOnce();
+    r.sleep();
   }
 
   return 0;
