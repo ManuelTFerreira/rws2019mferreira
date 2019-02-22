@@ -1,9 +1,11 @@
 #include <iostream>
 #include <ros/ros.h>
+#include <rws2019_msgs/MakeAPlay.h>
 #include <vector>
 
 using namespace std;
 using namespace boost;
+using namespace ros;
 
 namespace mferreira_ns {
 class Team {
@@ -11,6 +13,7 @@ public:
   string team_name;
   vector<string> player_names;
   ros::NodeHandle n;
+
   Team(string team_name_in) {
     team_name = team_name_in;
     // read the team players
@@ -115,6 +118,10 @@ public:
                                          << " and fleeing from team "
                                          << team_hunters->team_name << endl);
   }
+
+  void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
+    ROS_INFO("received a new message");
+  }
 };
 
 } // namespace mferreira_ns
@@ -123,21 +130,18 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "mferreira");
   ros::NodeHandle n;
   mferreira_ns::MyPlayer player("mferreira", "green");
-  // player.setTeamName("blue");
-  // player.setTeamName(0);
   std::cout << "Hello world from " << player.player_name << " of team "
             << player.getTeamName() << std::endl;
 
   mferreira_ns::Team team_green("red");
-  // team_green.player_names.push_back("moliveira");
-  // team_green.player_names.push_back("blourenco");
+
+  ros::Subscriber sub = n.subscribe(
+      "/make_a_play", 100, &mferreira_ns::MyPlayer::makeAPlayCallback, &player);
 
   while (ros::ok()) {
-    // team_green.printInfo();
-    // cout << "tmadeira belongs to team? " <<
-    // team_green.playerBelongsToTeam("tmadeira") << endl;
     ros::Duration(1).sleep();
     player.printInfo();
+    ros::spinOnce();
   }
 
   return 0;
