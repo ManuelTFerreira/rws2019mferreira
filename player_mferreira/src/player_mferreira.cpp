@@ -127,7 +127,7 @@ public:
     team_blue = (boost::shared_ptr<Team>)new Team("blue");
     ros::NodeHandle n;
     vis_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
-    (*vis_pub) = n.advertise<visualization_msgs::Marker>("player_names", 0);
+    (*vis_pub) = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
     if (team_red->playerBelongsToTeam(player_name))
     {
@@ -264,6 +264,7 @@ public:
     // team_preys = team_red;
     // team_hunters = team_green;
 
+    // PREYS
     vector<float> distance_to_preys;
     vector<float> angle_to_preys;
 
@@ -274,6 +275,31 @@ public:
       std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
       distance_to_preys.push_back(std::get<0>(t));
       angle_to_preys.push_back(std::get<1>(t));
+    }
+
+    // HUNTERS
+    vector<float> distance_to_hunters;
+    vector<float> angle_to_hunters;
+
+    for (size_t i = 0; i < team_hunters->player_names.size(); i++)
+    {
+      ROS_WARN_STREAM("team_hunters = " << team_hunters->player_names[i]);
+
+      std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_hunters->player_names[i]);
+      distance_to_hunters.push_back(std::get<0>(t));
+      angle_to_hunters.push_back(std::get<1>(t));
+    }
+
+    // compute closest hunter
+    int idx_closest_hunter = 0;
+    float distance_closest_hunter = 1000;
+    for (size_t i = 0; i < distance_to_hunters.size(); i++)
+    {
+      if (distance_to_preys[i] < distance_closest_hunter)
+      {
+        idx_closest_hunter = i;
+        distance_closest_hunter = distance_to_preys[i];
+      }
     }
 
     // compute closest prey
@@ -291,6 +317,7 @@ public:
     float dx = 10;
     float a = angle_to_preys[idx_closest_prey];
 
+    // Condicao para nao sair
     vector<float> distance_to_origin;
     vector<float> angle_to_origin;
 
@@ -298,10 +325,10 @@ public:
     distance_to_origin.push_back(std::get<0>(w));
     angle_to_origin.push_back(std::get<1>(w));
 
-    float minDist = 4.5;
+    float minDist = 7;
     if (distance_to_origin[0] > minDist)
     {
-      a = angle_to_origin[0] + M_PI;
+      a = angle_to_hunters[idx_closest_hunter] + M_PI;
     }
 
     // Step 2.5: check values
@@ -334,7 +361,7 @@ public:
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
     // marker.pose.position.x = 1;
-    // marker.pose.position.y = 1;
+    marker.pose.position.y = 0.5;
     // marker.pose.position.z = 1;
     // marker.pose.orientation.x = 0.0;
     // marker.pose.orientation.y = 0.0;
@@ -342,12 +369,12 @@ public:
     // marker.pose.orientation.w = 1.0;
     // marker.scale.x = 1;
     // marker.scale.y = 0.1;
-    marker.scale.z = 0.6;
+    marker.scale.z = 0.4;
     marker.color.a = 1.0;  // Don't forget to set the alpha!
     marker.color.r = 0.0;
     marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    marker.text = player_name;
+    marker.color.b = 0.0;
+    marker.text = "Prey: " + team_preys->player_names[idx_closest_prey];
     // only if using a MESH_RESOURCE marker type:
     // marker.mesh_resource =
     // "package://pr2_description/meshes/base_v0/base.dae";
