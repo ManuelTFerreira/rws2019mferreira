@@ -17,6 +17,12 @@ float randomizePosition()
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 }
 
+float randomizePosition2()
+{
+  srand(6875 * time(NULL));  // set initial seed value to 5323
+  return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
+}
+
 namespace mferreira_ns
 {
 class Team
@@ -156,7 +162,7 @@ public:
 
     // define intial position
     float sx = randomizePosition();
-    float sy = randomizePosition();
+    float sy = randomizePosition2();
     tf::Transform T1;
     T1.setOrigin(tf::Vector3(sx, sy, 0.0));
     tf::Quaternion q;
