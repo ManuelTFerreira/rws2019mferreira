@@ -124,6 +124,9 @@ public:
   tf::TransformBroadcaster br;
   tf::TransformListener listener;
   boost::shared_ptr<ros::Publisher> vis_pub;
+  string last_prey;
+  string last_hunter;
+  string prey = "";
   // =
 
   MyPlayer(std::string player_name_in, std::string team_name_in) : Player(player_name_in)
@@ -175,6 +178,9 @@ public:
     ros::Duration(0.1).sleep();
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
     printInfo();
+
+    last_hunter = "";
+    last_prey = "";
   }
 
   void printInfo()
@@ -249,6 +255,8 @@ public:
 
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
+    bool something_changed = false;
+
     ROS_INFO("received a new message");
 
     // Step 1:Find out where I am
@@ -309,7 +317,7 @@ public:
     }
 
     // compute closest prey
-    int idx_closest_prey = 0;
+    int idx_closest_prey = -1;
     float distance_closest_prey = 1000;
     for (size_t i = 0; i < distance_to_preys.size(); i++)
     {
@@ -321,7 +329,25 @@ public:
     }
 
     float dx = 100;
-    float a = angle_to_preys[idx_closest_prey];
+    float a;
+    if (idx_closest_prey != -1)
+    {
+      a = angle_to_preys[idx_closest_prey];
+    }
+    else
+    {
+      a = M_PI;
+    }
+
+    if (idx_closest_prey != -1)
+    {
+      string prey = msg->red_alive[idx_closest_prey];
+      if (prey != last_prey)
+      {
+        something_changed = true;
+        last_prey = prey;
+      }
+    }
 
     // Condicao para nao sair
     vector<float> distance_to_origin;
@@ -331,7 +357,7 @@ public:
     distance_to_origin.push_back(std::get<0>(w));
     angle_to_origin.push_back(std::get<1>(w));
 
-    if ((distance_closest_hunter < distance_closest_prey * 0.5) && (distance_closest_hunter < 2))
+    if ((distance_closest_hunter < distance_closest_prey * 0.5) && (distance_closest_hunter < 1))
     {
       // escape!!!!!!!!!;
       a = -angle_to_hunters[idx_closest_hunter];
@@ -343,9 +369,13 @@ public:
     }
 
     float minDist = 7;
-    if (distance_to_origin[0] > minDist)
+    if ((distance_to_origin[0] > minDist) && (distance_closest_hunter < 1))
     {
       a = angle_to_hunters[idx_closest_hunter] + M_PI;
+    }
+    else if ((distance_to_origin[0] > minDist) && (distance_closest_hunter >= 1))
+    {
+      a = angle_to_origin[0] + M_PI;
     }
 
     // Step 2.5: check values
@@ -370,32 +400,37 @@ public:
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
 
     // Criar Marcador
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = player_name;
-    marker.header.stamp = ros::Time();
-    marker.ns = player_name;
-    marker.id = 0;
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::Marker::ADD;
-    // marker.pose.position.x = 1;
-    marker.pose.position.y = 0.5;
-    // marker.pose.position.z = 1;
-    // marker.pose.orientation.x = 0.0;
-    // marker.pose.orientation.y = 0.0;
-    // marker.pose.orientation.z = 0.0;
-    // marker.pose.orientation.w = 1.0;
-    // marker.scale.x = 1;
-    // marker.scale.y = 0.1;
-    marker.scale.z = 0.4;
-    marker.color.a = 1.0;  // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.text = "Prey: " + team_preys->player_names[idx_closest_prey];
-    // only if using a MESH_RESOURCE marker type:
-    // marker.mesh_resource =
-    // "package://pr2_description/meshes/base_v0/base.dae";
-    vis_pub->publish(marker);
+    if (something_changed = true)
+    {
+      visualization_msgs::Marker marker;
+      marker.header.frame_id = player_name;
+      marker.header.stamp = ros::Time();
+      marker.ns = player_name;
+      marker.id = 0;
+      marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      marker.action = visualization_msgs::Marker::ADD;
+      // marker.pose.position.x = 1;
+      marker.pose.position.y = 0.5;
+      // marker.pose.position.z = 1;
+      // marker.pose.orientation.x = 0.0;
+      // marker.pose.orientation.y = 0.0;
+      // marker.pose.orientation.z = 0.0;
+      // marker.pose.orientation.w = 1.0;
+      // marker.scale.x = 1;
+      // marker.scale.y = 0.1;
+      marker.lifetime = ros::Duration(2);
+      marker.frame_locked = 1;
+      marker.scale.z = 0.4;
+      marker.color.a = 1.0;  // Don't forget to set the alpha!
+      marker.color.r = 0.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      marker.text = "Prey: " + team_preys->player_names[idx_closest_prey];
+      // only if using a MESH_RESOURCE marker type:
+      // marker.mesh_resource =
+      // "package://pr2_description/meshes/base_v0/base.dae";
+      vis_pub->publish(marker);
+    }
   }
 };  // namespace mferreira_ns
 
