@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   pcl_conversions
   pcl_ros
+  sound_play
 )
 
 ## System dependencies are found with CMake's conventions

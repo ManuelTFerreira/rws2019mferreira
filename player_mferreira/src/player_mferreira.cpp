@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 #include <rws2019_msgs/DoTheMath.h>
 #include <rws2019_msgs/MakeAPlay.h>
+#include <sound_play/SoundRequest.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
@@ -134,7 +135,8 @@ public:
   string last_prey;
   string last_hunter;
   string prey = "";
-  // =
+  boost::shared_ptr<ros::Publisher> sound_play_pub;
+  boost::shared_ptr<ros::Timer> timer; // =
 
   MyPlayer(std::string player_name_in, std::string team_name_in) : Player(player_name_in)
   {
@@ -144,6 +146,12 @@ public:
     ros::NodeHandle n;
     vis_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
     (*vis_pub) = n.advertise<visualization_msgs::Marker>("/bocas", 0);
+
+    sound_play_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
+    (*sound_play_pub) = n.advertise<sound_play::SoundRequest>("/robotsound", 10);
+
+    timer = (boost::shared_ptr<ros::Timer>)new ros::Timer;
+    (*timer) = n.createTimer(ros::Duration(5), &MyPlayer::timerCallback, this);
 
     if (red_alive->playerBelongsToTeam(player_name))
     {
@@ -188,6 +196,17 @@ public:
 
     // last_hunter = "";
     // last_prey = "";
+  }
+
+  void timerCallback(const ros::TimerEvent &)
+  {
+    sound_play::SoundRequest sound_request;
+    sound_request.sound = -3;
+    sound_request.command = 1;
+    sound_request.volume = 1.0;
+    sound_request.arg = "manuel ferreira, nothing to say";
+    sound_request.arg2 = "voice_kal_diphone";
+    // sound_play_pub->publish(sound_request);
   }
 
   void printInfo()
@@ -322,6 +341,8 @@ public:
       }
     }
 
+    ROS_INFO_STREAM("idx_closest_prey= " << idx_closest_prey);
+
     float dx = 100;
     float a;
     if (idx_closest_prey != -1)
@@ -428,6 +449,7 @@ public:
     //   vis_pub->publish(marker);
     // }
   }
+
 }; // namespace mferreira_ns
 
 } // namespace mferreira_ns
