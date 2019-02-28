@@ -1,8 +1,8 @@
 
 #include <math.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl_ros/point_cloud.h>
+// #include <pcl/point_types.h>
+// #include <pcl_conversions/pcl_conversions.h>
+// #include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
@@ -15,7 +15,7 @@ using namespace std;
 using namespace boost;
 using namespace ros;
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+// typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 float randomizePosition()
 {
@@ -221,12 +221,12 @@ public:
     return getDistanceAndAngleToPlayer("world");
   }
 
-  void CloudCallback(const PointCloud::ConstPtr &msg)
-  {
-    printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-    BOOST_FOREACH (const pcl::PointXYZ &pt, msg->points)
-      printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-  }
+  // void CloudCallback(const PointCloud::ConstPtr &msg)
+  // {
+  //   printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+  //   BOOST_FOREACH (const pcl::PointXYZ &pt, msg->points)
+  //     printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+  // }
 
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
@@ -424,8 +424,8 @@ int main(int argc, char **argv)
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &mferreira_ns::MyPlayer::makeAPlayCallback, &player);
 
-  ros::Subscriber sub2 =
-      n.subscribe<PointCloud>("/object_point_cloud", 1, &mferreira_ns::MyPlayer::CloudCallback, &player);
+  // ros::Subscriber sub2 =
+  //     n.subscribe<PointCloud>("/object_point_cloud", 1, &mferreira_ns::MyPlayer::CloudCallback, &player);
 
   player.printInfo();
   ros::Rate r(20);
