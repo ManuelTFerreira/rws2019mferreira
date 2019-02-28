@@ -1,4 +1,8 @@
+
 #include <math.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
@@ -10,6 +14,8 @@
 using namespace std;
 using namespace boost;
 using namespace ros;
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 float randomizePosition()
 {
@@ -190,24 +196,6 @@ public:
                                          << team_hunters->team_name << endl);
   }
 
-  // float getDistanceToPlayer(string other_player)
-  // {
-  //   tf::StampedTransform T0;
-
-  //   try
-  //   {
-  //     listener.lookupTransform("mferreira", other_player, ros::Time(0), T0);
-  //   }
-  //   catch (tf::TransformException ex)
-  //   {
-  //     ROS_ERROR("%s", ex.what());
-  //     ros::Duration(0.1).sleep();
-  //     return 1000;
-  //   }
-
-  //   return sqrt(T0.getOrigin().x() * T0.getOrigin().x() + T0.getOrigin().y() * T0.getOrigin().y());
-  // }
-
   std::tuple<float, float> getDistanceAndAngleToPlayer(string other_player)
   {
     tf::StampedTransform T0;
@@ -217,7 +205,7 @@ public:
     }
     catch (tf::TransformException ex)
     {
-      ROS_ERROR("%s", ex.what());
+      // ROS_ERROR("%s", ex.what());
       ros::Duration(0.01).sleep();
       return { 1000.0, 0.0 };
     }
@@ -228,29 +216,16 @@ public:
     return { d, a };
   }
 
-  // std::tuple<float, float> getDistanceToLimits(string other_player)
-  // {
-  //   tf::StampedTransform T0;
-  //   try
-  //   {
-  //     listener.lookupTransform(player_name, other_player, ros::Time(0), T0);
-  //   }
-  //   catch (tf::TransformException ex)
-  //   {
-  //     ROS_ERROR("%s", ex.what());
-  //     ros::Duration(0.01).sleep();
-  //     return { 1000.0, 0.0 };
-  //   }
-
-  //   float d = sqrt(T0.getOrigin().x() * T0.getOrigin().x() + T0.getOrigin().y() * T0.getOrigin().y());
-  //   float a = atan2(T0.getOrigin().y(), T0.getOrigin().x());
-  //   //            return std::tuple<float, float>(d,a);
-  //   return { d, a };
-  // }
-
   std::tuple<float, float> getDistanceAndAngleToOrigin()
   {
     return getDistanceAndAngleToPlayer("world");
+  }
+
+  void CloudCallback(const PointCloud::ConstPtr &msg)
+  {
+    printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+    BOOST_FOREACH (const pcl::PointXYZ &pt, msg->points)
+      printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
   }
 
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
@@ -267,7 +242,7 @@ public:
     }
     catch (tf::TransformException ex)
     {
-      ROS_ERROR("%s", ex.what());
+      // ROS_ERROR("%s", ex.what());
       ros::Duration(0.1).sleep();
     }
 
@@ -395,6 +370,8 @@ public:
     // br.sendTransform(tf::StampedTransform(T1, ros::Time::now(), "world",
     // player_name));
 
+    //..
+
     // Step 4:
     tf::Transform Tglobal = T0 * T1;
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
@@ -436,7 +413,7 @@ public:
 
 }  // namespace mferreira_ns
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "mferreira");
   ros::NodeHandle n;
@@ -446,6 +423,9 @@ int main(int argc, char** argv)
   mferreira_ns::Team team_blue("blue");
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &mferreira_ns::MyPlayer::makeAPlayCallback, &player);
+
+  ros::Subscriber sub2 =
+      n.subscribe<PointCloud>("/object_point_cloud", 1, &mferreira_ns::MyPlayer::CloudCallback, &player);
 
   player.printInfo();
   ros::Rate r(20);
