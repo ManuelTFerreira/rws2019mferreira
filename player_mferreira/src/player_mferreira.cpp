@@ -4,6 +4,7 @@
 // #include <pcl_conversions/pcl_conversions.h>
 // #include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
+#include <rws2019_msgs/DoTheMath.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
@@ -19,13 +20,13 @@ using namespace ros;
 
 float randomizePosition()
 {
-  srand(4875 * time(NULL));  // set initial seed value to 5323
+  srand(4875 * time(NULL)); // set initial seed value to 5323
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 }
 
 float randomizePosition2()
 {
-  srand(6875 * time(NULL));  // set initial seed value to 5323
+  srand(6875 * time(NULL)); // set initial seed value to 5323
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 }
 
@@ -207,13 +208,13 @@ public:
     {
       // ROS_ERROR("%s", ex.what());
       ros::Duration(0.01).sleep();
-      return { 1000.0, 0.0 };
+      return {1000.0, 0.0};
     }
 
     float d = sqrt(T0.getOrigin().x() * T0.getOrigin().x() + T0.getOrigin().y() * T0.getOrigin().y());
     float a = atan2(T0.getOrigin().y(), T0.getOrigin().x());
     //            return std::tuple<float, float>(d,a);
-    return { d, a };
+    return {d, a};
   }
 
   std::tuple<float, float> getDistanceAndAngleToOrigin()
@@ -227,6 +228,24 @@ public:
   //   BOOST_FOREACH (const pcl::PointXYZ &pt, msg->points)
   //     printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
   // }
+
+  bool doTheMathCallback(rws2019_msgs::DoTheMath::Request &req, rws2019_msgs::DoTheMath::Response &res)
+  {
+    if (req.op == "+")
+      res.result = req.a + req.b;
+    else if (req.op == "-")
+      res.result = req.a - req.b;
+    else if (req.op == "*")
+      res.result = req.a * req.b;
+    else if (req.op == "/")
+      res.result = req.a / req.b;
+    else
+      return false;
+
+    ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
+    ROS_INFO("sending back response: [%ld]", (long int)res.result);
+    return true;
+  }
 
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
@@ -409,9 +428,9 @@ public:
     //   vis_pub->publish(marker);
     // }
   }
-};  // namespace mferreira_ns
+}; // namespace mferreira_ns
 
-}  // namespace mferreira_ns
+} // namespace mferreira_ns
 
 int main(int argc, char **argv)
 {
@@ -423,6 +442,9 @@ int main(int argc, char **argv)
   mferreira_ns::Team team_blue("blue");
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &mferreira_ns::MyPlayer::makeAPlayCallback, &player);
+
+  ros::ServiceServer service = n.advertiseService("do_the_math", &mferreira_ns::MyPlayer::doTheMathCallback, &player);
+  ROS_INFO("Ready to do the math");
 
   // ros::Subscriber sub2 =
   //     n.subscribe<PointCloud>("/object_point_cloud", 1, &mferreira_ns::MyPlayer::CloudCallback, &player);
